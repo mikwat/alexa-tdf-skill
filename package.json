@@ -1,0 +1,16 @@
+{
+  "name": "alexa-tdf-skill",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "moment": "^2.13.0",
+    "moment-timezone": "^0.5.4",
+    "node-promise": "^0.5.12"
+  },
+  "devDependencies": {
+    "node-lambda": "^0.8.6"
+  },
+  "author": "Michael Watts",
+  "license": "ISC"
+}

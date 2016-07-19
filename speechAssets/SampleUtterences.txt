@@ -1,0 +1,11 @@
+GetTodayIntent what were the results
+GetTodayIntent what were today's results
+GetTodayIntent what were the stage results
+GetTodayIntent get the results
+GetTodayIntent give me the results
+GetTodayIntent who won today's stage
+
+GetDayIntent what were the results on {day}
+GetDayIntent what were the stage results on {day}
+GetDayIntent get the results for {day}
+GetDayIntent who won the stage on {day}
