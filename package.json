@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "alexa-sdk": "^1.0.3",
     "moment": "^2.13.0",
     "moment-timezone": "^0.5.4",
     "node-promise": "^0.5.12"

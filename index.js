@@ -1,84 +1,29 @@
 var proCyclingStats = require('./ProCyclingStats');
+var Alexa = require('alexa-sdk');
 
-/**
- * The AlexaSkill Module that has the AlexaSkill prototype and helper functions
- */
-var AlexaSkill = require('./AlexaSkill');
-
-var TdfSkill = function() {
-  AlexaSkill.call(this, process.env.APP_ID); // APP_ID must be defined in `deploy.env`
-};
-
-// Extend AlexaSkill
-TdfSkill.prototype = Object.create(AlexaSkill.prototype);
-TdfSkill.prototype.constructor = TdfSkill;
-
-
-TdfSkill.prototype.eventHandlers.onSessionStarted = function(sessionStartedRequest, session) {
- console.log("TdfSkill onSessionStarted requestId: " + sessionStartedRequest.requestId +
-             ", sessionId: " + session.sessionId);
-
-  // any session init logic would go here
-};
-
-TdfSkill.prototype.eventHandlers.onLaunch = function(launchRequest, session, response) {
-  console.log("TdfSkill onLaunch requestId: " + launchRequest.requestId + ", sessionId: " +
-              session.sessionId);
-  getWelcomeResponse(response);
-};
-
-TdfSkill.prototype.eventHandlers.onSessionEnded = function(sessionEndedRequest, session) {
-  console.log("onSessionEnded requestId: " + sessionEndedRequest.requestId + ", sessionId: " +
-              session.sessionId);
-
-  // any session cleanup logic would go here
-};
-
-TdfSkill.prototype.intentHandlers = {
-  'GetTodayIntent': function(intent, session, response) {
-    handleRequest(intent, session, response);
+var handlers = {
+  'GetTodayIntent': function() {
+    handleRequest.call(this);
   },
 
-  'GetDayIntent': function(intent, session, response) {
-    handleRequest(intent, session, response);
+  'GetDayIntent': function() {
+    handleRequest.call(this);
+  },
+  'AMAZON.StopIntent': function() {
+    this.emit(':tell', 'Goodbye');
   },
 
-  // 'AMAZON.HelpIntent': function(intent, session, response) {
-  //   var speechText = "With History Buff, you can get historical events for any day of the year.  " +
-  //                    "For example, you could say today, or August thirtieth, or you can say exit. " +
-  //                    "Now, which day do you want?";
-  //   var repromptText = "Which day do you want?";
-  //   var speechOutput = {
-  //     speech: speechText,
-  //     type: AlexaSkill.speechOutputType.PLAIN_TEXT
-  //   };
-  //   var repromptOutput = {
-  //     speech: repromptText,
-  //     type: AlexaSkill.speechOutputType.PLAIN_TEXT
-  //   };
-  //   response.ask(speechOutput, repromptOutput);
-  // },
-
-  'AMAZON.StopIntent': function(intent, session, response) {
-    var speechOutput = {
-      speech: "Goodbye",
-      type: AlexaSkill.speechOutputType.PLAIN_TEXT
-    };
-    response.tell(speechOutput);
-  },
-
-  'AMAZON.CancelIntent': function(intent, session, response) {
-    var speechOutput = {
-      speech: "Goodbye",
-      type: AlexaSkill.speechOutputType.PLAIN_TEXT
-    };
-    response.tell(speechOutput);
+  'AMAZON.CancelIntent': function() {
+    this.emit(':tell', 'Goodbye');
   }
 };
 
-/**
- * Function to handle the onLaunch skill behavior
- */
+exports.handler = function(event, context, callback){
+  var alexa = Alexa.handler(event, context);
+  alexa.appId = process.env.APP_ID; // APP_ID must be defined in `deploy.env`
+  alexa.registerHandlers(handlers);
+  alexa.execute();
+};
 
 function getWelcomeResponse(response) {
   // If we wanted to initialize the session to have some attributes we could add those here.
@@ -90,46 +35,33 @@ function getWelcomeResponse(response) {
   // If the user either does not reply to the welcome message or says something that is not
   // understood, they will be prompted again with this text.
 
-  var speechOutput = {
-    speech: "<speak>" + output + "</speak>",
-    type: AlexaSkill.speechOutputType.SSML
-  };
-  var repromptOutput = {
-    speech: output,
-    type: AlexaSkill.speechOutputType.PLAIN_TEXT
-  };
   response.askWithCard(speechOutput, repromptOutput, cardTitle, output);
+}
+
+function ask(output) {
+  if (output === undefined || output === '') {
+    output = 'There was an error, sorry';
+  }
+
+  this.emit(':tell', output);
 }
 
 /**
  * Gets a poster prepares the speech to reply to the user.
  */
-function handleRequest(intent, session, response) {
-  var cardTitle = "Tour de France";
-
-  function ask(output) {
-    if (output === undefined || output === '') {
-      output = 'There was an error, sorry';
-    }
-
-    var speechOutput = {
-      speech: "<speak>" + output + "</speak>",
-      type: AlexaSkill.speechOutputType.SSML
-    };
-    response.ask(speechOutput);
-  }
-
+function handleRequest() {
   var daySlot;
-  if (intent.slots) {
-    daySlot = intent.slots.day;
+  if (this.event.request.intent.slots) {
+    daySlot = this.event.request.intent.slots.day;
   }
 
-  proCyclingStats.getResults(daySlot).then(ask, ask);
+  var that = this;
+  proCyclingStats.getResults(daySlot).then(
+    function(output) {
+      ask.call(that, output);
+    },
+    function(output) {
+      ask.call(that, output);
+    }
+  );
 }
-
-// Create the handler that responds to the Alexa Request.
-exports.handler = function(event, context) {
-  // Create an instance of the TdfSkill.
-  var skill = new TdfSkill();
-  skill.execute(event, context);
-};
